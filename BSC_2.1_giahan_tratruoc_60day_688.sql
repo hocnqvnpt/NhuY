@@ -6,14 +6,7 @@
 ---Het ngay 1 doi voi cac hinh thuc con lai (do ngay 1 moi hoan cong cac hop dong doi toc do)
 ---GHTC: doi voi congvan_id = 190 (tra truoc tru dan) xet tien AVG thang moi >= AVG thang cu
 
-select * from css_hcm.phieutt_hd  where phieutt_id = 4132116;hdkh_id in (10371518, 10518328);
-select * from CSS_HCM.ct_phieutt where hdtb_id = 11426982;
-select * from css_hcm.hd_khachhang
-select * from css_hcm.hd_thuebao where  ma_tb = 'kieu923'; 11110732 11209509
-select * from css_hcm.db_datcoc where rkm_id = 3398911;
-select hdtb_id,thuebao_dc_id from css_hcm.hdtb_datcoc where rkm_id = 3398911;3104485
-3397926
-select * from css_hcm.hdtb_datcoc where THUEBAO_THOAITRA_ID = 2591858;2549813;2562561;
+
 select * from css_hcm.khuyenmai_dbtb
 ;
 -----1-------------Danh sach tham gia han tra truoc--------------PL1(BH, Dai)
