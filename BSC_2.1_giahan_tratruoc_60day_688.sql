@@ -9,23 +9,9 @@
 
 select * from css_hcm.khuyenmai_dbtb
 ;
+
 -----1-------------Danh sach tham gia han tra truoc--------------PL1(BH, Dai)
-drop table tmp3_60ngay-- purge;
-commit
-rollback;
-select distinct "GH.TRATRUOC+1--,DBDC.THANG_BDB,HDTTDC.THANG_BDC,HDTTDC.*" from tmp3; where ma_tb in ('p6a2405', 'hcmp6a2405');
-select rkm_id from tmp3_ts group by rkm_id having count(rkm_id) >1;
-select distinct HT_TRA_ID from tmp3_60ngay
-select* from css_hcm.hinhthuc_Tra where ht_Tra_id in (select distinct HT_TRA_ID from css_Hcm.phieutt_hd where to_number(to_char(ngay_tt,'yyyymm')) in (202402,202403,202404)) -- where ngay_Nganhang is not null
-a where ma_tb in ('xuyennguyen60'); where rowid not in (select min(rowid) from tmp3 where a.rkm_id = rkm_id);
-select rkm_id from tmp3_ts group by rkm_id having count(rkm_id) > 1
-update tmp3 set lan = 2618 where ma_tb like 'nutifood%';
-rollback;
-commit;
-delete from tmp3 where rkm_id is null;
-select* from css_hcm.hinhthuc_tra where ht_tra_id in (select distinct ht_Tra_id from tmp3_60ngay)
-(select distinct ht_Tra_id from css_hcm.phieutt_hd where  to_number(to_char(ngay_tt, 'yyyymmdd')) between 20231201 and 20240302)
-;
+
 select * from ttkdhcm_ktnv.DM_MVIEW ;
     ---Buoc 1--tao danh sach hong dong tra truoc trong tgian quy dinh
 create table tmp3_60ngay as;
