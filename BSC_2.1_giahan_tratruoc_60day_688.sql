@@ -5,23 +5,24 @@
 ---Het ngay cuoi thang doi voi ngay ngan hang (chung tu)
 ---Het ngay 1 doi voi cac hinh thuc con lai (do ngay 1 moi hoan cong cac hop dong doi toc do)
 ---GHTC: doi voi congvan_id = 190 (tra truoc tru dan) xet tien AVG thang moi >= AVG thang cu
-
+drop procedure bsc_hcm_tb_giaha_022;
 
 select * from css_hcm.khuyenmai_dbtb
 ;
+
 ---tao FUNCTION
-create or replace function nhuy.bsc_hcm_tb_giaha_022 (thang_bsc, ngay_bd_tt, ngay_kt_tt)
-	return number
+create or replace procedure bsc_hcm_tb_giaha_022_test
 as
+    thang_Bsc number(6);
 begin 
-	drop table nhuy.tmp3_30day;
-	create table nhuy.tmp3_30day_test as
-	
-	
+    select to_number(to_char(sysdate,'yyyymm')-1) into thang_bsc from dual;
+    execute immediate 'truncate table tmp3_30ngay';
+    commit;
+	insert into tmp3_30ngay
 	with hddc as (select distinct hdtb_id, nvl(h.rkm_id, g.rkm_id) rkm_id, nvl(h.ngay_bddc, g.ngay_bddc) ngay_bddc, nvl(h.ngay_ktdc, g.ngay_ktdc) ngay_ktdc 
     from css_hcm.hdtb_datcoc g left join css_hcm.db_datcoc h on g.thuebao_dc_id = h.thuebao_dc_id)
 			, gh as (select khachhang_id, thuebao_id, duan_id, ma_tb, ma_tt, loaitb_id, thang_kt , row_number() over (partition by thuebao_id order by thuebao_id desc) rnk
-							from ttkdhcm_ktnv.ghtt_giao_688 where tratruoc = 1 and km = 1 and loaibo = 0 and thang_kt = thang_bsc)             ---change n-1
+							from ttkdhcm_ktnv.ghtt_giao_688 where tratruoc = 1 and km = 1 and loaibo = 0 and thang_kt =  thang_bsc   )       ---change n-1
 			, kmtb as (select * from css_hcm.khuyenmai_dbtb 
 								where datcoc_csd > 0 and least(thang_ktdc, nvl(thang_kt_dc, 999999), nvl(thang_huy, 999999)) >= thang_bddc)
 
@@ -30,7 +31,7 @@ begin
 													, to_number(to_char(nvl(kmtb.ngay_bddc, hddc.ngay_bddc), 'yyyymmdd')) ngay_bd_moi
 													, to_number(to_char(nvl(kmtb.ngay_ktdc, hddc.ngay_ktdc), 'yyyymmdd')) ngay_kt_moi
 													, a.phieutt_id, a.trangthai
-													, a.ma_gd, a.ngay_hd, a.ngay_tt, ct.ngay_nganhang, a.soseri, a.seri, b.tien tien_thanhtoan,b.vat
+													, a.ma_gd, a.ngay_hd, a.ngay_tt, null, a.soseri, a.seri, b.tien tien_thanhtoan,b.vat
 													, kt.kenhthu
 													, nh.ten_nh ten_nganhang
 													, ht.ht_tra ten_ht_tra
@@ -42,12 +43,11 @@ begin
 														join css_hcm.hd_khachhang hdkh on hdtb.hdkh_id = hdkh.hdkh_id
 														join gh on hdtb.thuebao_id = gh.thuebao_id and rnk = 1
 														left join kmtb on b.hdtb_id = kmtb.hdtb_id
-														left join ct on a.phieutt_id = ct.phieu_id
 														left join css_hcm.kenhthu kt on kt.kenhthu_id = a.kenhthu_id
 														left join css_hcm.nganhang nh on nh.nganhang_id = a.nganhang_id
 														left join css_hcm.hinhthuc_tra ht on ht.ht_tra_id = a.ht_tra_id
 									 where a.kenhthu_id not in (6) and a.trangthai = 1
-													and to_number(to_char(a.ngay_tt, 'yyyymmdd')) between ngay_bd_tt and ngay_kt_tt                  ----change--3 thang- ngay 2
+													and to_number(to_char(a.ngay_tt, 'yyyymmdd')) between 20240801 and 20240901                 ----change--3 thang- ngay 2
 																 
 									)
 			select * from kq_ghtt a
@@ -55,6 +55,16 @@ begin
 								and not exists (select 1 from ttkd_bsc.ct_bsc_tratruoc_moi where rkm_id = a.rkm_id and thang >=thang_Bsc-1)
 								and not exists (select 1 from ttkdhcm_ktnv.ghtt_giao_688 where a.rkm_id = rkm_id and thang_kt = a.thang_kt and tratruoc =1 and loaibo =0)
 						;
+            commit;
+--    return 1;
+end bsc_hcm_tb_giaha_022_test;
+
+
+begin 
+    bsc_hcm_tb_giaha_022_test;
+end;
+select* from tmp3_30ngay;
+
 -----1-------------Danh sach tham gia han tra truoc--------------PL1(BH, Dai)
 
 select * from ttkdhcm_ktnv.DM_MVIEW ;
