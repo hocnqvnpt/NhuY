@@ -15,52 +15,46 @@ create or replace function nhuy.bsc_hcm_tb_giaha_022 (thang_bsc, ngay_bd_tt, nga
 as
 begin 
 	drop table nhuy.tmp3_30day;
-	create table nhuy.tmp3_30day as
+	create table nhuy.tmp3_30day_test as
 	
 	
 	with hddc as (select distinct hdtb_id, nvl(h.rkm_id, g.rkm_id) rkm_id, nvl(h.ngay_bddc, g.ngay_bddc) ngay_bddc, nvl(h.ngay_ktdc, g.ngay_ktdc) ngay_ktdc 
     from css_hcm.hdtb_datcoc g left join css_hcm.db_datcoc h on g.thuebao_dc_id = h.thuebao_dc_id)
-, gh as (select khachhang_id, thuebao_id, duan_id, ma_tb, ma_tt, loaitb_id, thang_kt , row_number() over (partition by thuebao_id order by thuebao_id desc) rnk
-                from ttkdhcm_ktnv.ghtt_giao_688 where tratruoc = 1 and km = 1 and loaibo = 0 and thang_kt = thang_bsc)             ---change n-1
-, kmtb as (select * from css_hcm.khuyenmai_dbtb 
-                    where datcoc_csd > 0 and least(thang_ktdc, nvl(thang_kt_dc, 999999), nvl(thang_huy, 999999)) >= thang_bddc)
+			, gh as (select khachhang_id, thuebao_id, duan_id, ma_tb, ma_tt, loaitb_id, thang_kt , row_number() over (partition by thuebao_id order by thuebao_id desc) rnk
+							from ttkdhcm_ktnv.ghtt_giao_688 where tratruoc = 1 and km = 1 and loaibo = 0 and thang_kt = thang_bsc)             ---change n-1
+			, kmtb as (select * from css_hcm.khuyenmai_dbtb 
+								where datcoc_csd > 0 and least(thang_ktdc, nvl(thang_kt_dc, 999999), nvl(thang_huy, 999999)) >= thang_bddc)
 
-, kq_ghtt as (select  gh.khachhang_id, gh.thuebao_id, gh.duan_id, gh.ma_tb, gh.ma_tt, gh.loaitb_id, gh.thang_kt, 22 as lan
-                                        , nvl(kmtb.rkm_id, hddc.rkm_id) rkm_id
-                                        , to_number(to_char(nvl(kmtb.ngay_bddc, hddc.ngay_bddc), 'yyyymmdd')) ngay_bd_moi
-                                        , to_number(to_char(nvl(kmtb.ngay_ktdc, hddc.ngay_ktdc), 'yyyymmdd')) ngay_kt_moi
-                                        , a.phieutt_id, a.trangthai
-                                        , a.ma_gd, a.ngay_hd, a.ngay_tt, ct.ngay_nganhang, a.soseri, a.seri, b.tien tien_thanhtoan,b.vat
-                                        , kt.kenhthu
-                                        , nh.ten_nh ten_nganhang
-                                        , ht.ht_tra ten_ht_tra
-                                        , b.hdtb_id, hdkh.hdkh_id, hdkh.nhanvien_id nvgiaophieu_id, hdkh.donvi_id dvgiaophieu_id, hdkh.ctv_id nvtuvan_id, hdkh.nhanviengt_id, a.thungan_tt_id, a.kenhthu_id, a.ht_tra_id
-                         from css_hcm.phieutt_hd a
-                                            join css_hcm.ct_phieutt b on a.phieutt_id = b.phieutt_id and b.khoanmuctt_id = 11 and b.tien > 0
-                                            left join hddc on b.hdtb_id = hddc.hdtb_id
-                                            join css_hcm.hd_thuebao hdtb on b.hdtb_id = hdtb.hdtb_id and hdtb.kieuld_id in (551, 550, 24, 13080) and hdtb.tthd_id <> 7
-                                            join css_hcm.hd_khachhang hdkh on hdtb.hdkh_id = hdkh.hdkh_id
-                                            join gh on hdtb.thuebao_id = gh.thuebao_id and rnk = 1
-                                            left join kmtb on b.hdtb_id = kmtb.hdtb_id
-                                            left join ct on a.phieutt_id = ct.phieu_id
-                                            left join css_hcm.kenhthu kt on kt.kenhthu_id = a.kenhthu_id
-                                            left join css_hcm.nganhang nh on nh.nganhang_id = a.nganhang_id
-                                            left join css_hcm.hinhthuc_tra ht on ht.ht_tra_id = a.ht_tra_id
---                                            left join ct2 on a.phieutt_id = ct2.phieu_id
-                         where a.kenhthu_id not in (6) and a.trangthai = 1
-                                        and to_number(to_char(a.ngay_tt, 'yyyymmdd')) between ngay_bd_tt and ngay_kt_tt                  ----change--3 thang- ngay 2
-                                                                 ----change--3 thang- ngay 2
-                           --             and gh.ma_tb in ('ghtk_binhtrong','ghtk_baucat','ghtk_bclythuongkiet')   ----loai taykhi can---
-                                  --   and gh.ma_tb like 'nutifood%'
-                                    --   and hdttdc.hdtb_id not in (11189895, 11110732)    ----loai taykhi can---
-                                    --and a.ma_gd = 'HCM-TT/02290172'
-                        )
-select * from kq_ghtt a
-where  a.ngay_bd_moi is NOT null 
-                    and not exists (select 1 from ttkd_bsc.ct_bsc_tratruoc_moi where rkm_id = a.rkm_id and thang >=202404)
-                    and not exists (select 1 from ttkdhcm_ktnv.ghtt_giao_688 where a.rkm_id = rkm_id and thang_kt = a.thang_kt and tratruoc =1 and loaibo =0)
-                  and not exists (select rkm_id from tmp3_60ngay where rkm_id = a.rkm_id) 
-            ;
+			, kq_ghtt as (select  gh.khachhang_id, gh.thuebao_id, gh.duan_id, gh.ma_tb, gh.ma_tt, gh.loaitb_id, gh.thang_kt, 22 as lan
+													, nvl(kmtb.rkm_id, hddc.rkm_id) rkm_id
+													, to_number(to_char(nvl(kmtb.ngay_bddc, hddc.ngay_bddc), 'yyyymmdd')) ngay_bd_moi
+													, to_number(to_char(nvl(kmtb.ngay_ktdc, hddc.ngay_ktdc), 'yyyymmdd')) ngay_kt_moi
+													, a.phieutt_id, a.trangthai
+													, a.ma_gd, a.ngay_hd, a.ngay_tt, ct.ngay_nganhang, a.soseri, a.seri, b.tien tien_thanhtoan,b.vat
+													, kt.kenhthu
+													, nh.ten_nh ten_nganhang
+													, ht.ht_tra ten_ht_tra
+													, b.hdtb_id, hdkh.hdkh_id, hdkh.nhanvien_id nvgiaophieu_id, hdkh.donvi_id dvgiaophieu_id, hdkh.ctv_id nvtuvan_id, hdkh.nhanviengt_id, a.thungan_tt_id, a.kenhthu_id, a.ht_tra_id
+									 from css_hcm.phieutt_hd a
+														join css_hcm.ct_phieutt b on a.phieutt_id = b.phieutt_id and b.khoanmuctt_id = 11 and b.tien > 0
+														left join hddc on b.hdtb_id = hddc.hdtb_id
+														join css_hcm.hd_thuebao hdtb on b.hdtb_id = hdtb.hdtb_id and hdtb.kieuld_id in (551, 550, 24, 13080) and hdtb.tthd_id <> 7
+														join css_hcm.hd_khachhang hdkh on hdtb.hdkh_id = hdkh.hdkh_id
+														join gh on hdtb.thuebao_id = gh.thuebao_id and rnk = 1
+														left join kmtb on b.hdtb_id = kmtb.hdtb_id
+														left join ct on a.phieutt_id = ct.phieu_id
+														left join css_hcm.kenhthu kt on kt.kenhthu_id = a.kenhthu_id
+														left join css_hcm.nganhang nh on nh.nganhang_id = a.nganhang_id
+														left join css_hcm.hinhthuc_tra ht on ht.ht_tra_id = a.ht_tra_id
+									 where a.kenhthu_id not in (6) and a.trangthai = 1
+													and to_number(to_char(a.ngay_tt, 'yyyymmdd')) between ngay_bd_tt and ngay_kt_tt                  ----change--3 thang- ngay 2
+																 
+									)
+			select * from kq_ghtt a
+			where  a.ngay_bd_moi is NOT null 
+								and not exists (select 1 from ttkd_bsc.ct_bsc_tratruoc_moi where rkm_id = a.rkm_id and thang >=thang_Bsc-1)
+								and not exists (select 1 from ttkdhcm_ktnv.ghtt_giao_688 where a.rkm_id = rkm_id and thang_kt = a.thang_kt and tratruoc =1 and loaibo =0)
+						;
 -----1-------------Danh sach tham gia han tra truoc--------------PL1(BH, Dai)
 
 select * from ttkdhcm_ktnv.DM_MVIEW ;
