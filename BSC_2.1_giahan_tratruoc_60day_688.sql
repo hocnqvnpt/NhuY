@@ -5,6 +5,7 @@
 ---Het ngay cuoi thang doi voi ngay ngan hang (chung tu)
 ---Het ngay 1 doi voi cac hinh thuc con lai (do ngay 1 moi hoan cong cac hop dong doi toc do)
 ---GHTC: doi voi congvan_id = 190 (tra truoc tru dan) xet tien AVG thang moi >= AVG thang cu
+---Mỗi năm backup 1 bảng lưu trữ ttkd_bsc.ct_bsc_tratruoc_moi_30day_20xx
 drop procedure bsc_hcm_tb_giaha_022;
 
 select * from css_hcm.khuyenmai_dbtb
@@ -541,7 +542,7 @@ select* from bcss_hcm.ctkmtc_int_20230901
                                                 ) ps_htv on a.ma_tb = ps_htv.ma_tb and a.loaitb_id in (18)---thang n
                   
                 where a.thang = 202310 and congvan_id = 190 and nhom_datcoc_id in (1) and TIEN_DC_CU <> TIEN_THANHTOAN + VAT
-                                ---tien tru dan >= tien ps thang n l� OK
+                                ---tien tru dan >= tien ps thang n là OK
                                 and TIEN_TD   < COALESCE (ps, ps_m, ps_htv, 9999999) 
                                 ---import < 20k
                            --     and a.ma_tb in ('hcm_thuhien0719')
