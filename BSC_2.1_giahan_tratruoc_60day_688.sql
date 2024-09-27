@@ -231,7 +231,7 @@ begin
     bsc_hcm_tb_giaha_022_test(20240901,20240902);
 end;
 
-delete from ct_Bsc_Tratruoc_moi_30day where thang = 202409;
+select* from ct_Bsc_Tratruoc_moi_30day where thang = 202409;
 select* from tl_giahan_Tratruoc where thang = 202409;
 -----1-------------Danh sach tham gia han tra truoc--------------PL1(BH, Dai)
 
