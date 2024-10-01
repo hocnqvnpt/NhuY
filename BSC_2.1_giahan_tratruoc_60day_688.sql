@@ -1,6 +1,6 @@
 ---Mỗi năm backup 1 bảng lưu trữ ttkd_bsc.ct_bsc_tratruoc_moi_30day_20xx
---- ngay_bd_tt: ngay bat dau thanh toan cua hop dong 
---- ngay_kt_tt: ngay ket thuc thanh toan cua hop dong
+--- ngay_bd_tt: thoi gian bat dau quet ngay thanh toan hop dong 
+--- ngay_kt_tt: thoi gian ket thuc quet ngay thanh toan hop dong
 -- ins: tham so dung de danh dau, ins = 1 => tao bang temp moi, ins > 1 => insert them vao bang temp
 ---tao PROCEDURE
 create or replace procedure bsc_hcm_tb_giaha_022_test
