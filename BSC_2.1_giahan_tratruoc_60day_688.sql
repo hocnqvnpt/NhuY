@@ -6,20 +6,22 @@
 ---Het ngay 1 doi voi cac hinh thuc con lai (do ngay 1 moi hoan cong cac hop dong doi toc do)
 ---GHTC: doi voi congvan_id = 190 (tra truoc tru dan) xet tien AVG thang moi >= AVG thang cu
 ---Mỗi năm backup 1 bảng lưu trữ ttkd_bsc.ct_bsc_tratruoc_moi_30day_20xx
-drop procedure bsc_hcm_tb_giaha_022;
-
+drop table tmp3_30ngay;
+commit;
 select * from css_hcm.khuyenmai_dbtb
 ;
+delete from ct_Bsc_tratruoc_moi_30day where thang in (202408,202409);
 
 ---tao PROCEDURE
 create or replace procedure bsc_hcm_tb_giaha_022_test
     (ngay_bd_tt number, ngay_kt_tt number, ins number)
+    AUTHID CURRENT_USER
 as
     thang_Bsc number(6);
     sql_query varchar2(4000);
     sql_query2 varchar2(4000);
     sql_query3 varchar2(4000);
-
+    
 
 begin 
 	-- ins > 1: insert them vao bang tmp
@@ -105,6 +107,7 @@ begin
 									and not exists (select 1 from ttkd_bsc.ct_bsc_tratruoc_moi where rkm_id = a.rkm_id and thang >='||thang_Bsc-1||')
 									and not exists (select 1 from ttkdhcm_ktnv.ghtt_giao_688 where a.rkm_id = rkm_id and thang_kt = a.thang_kt and tratruoc =1 and loaibo =0)
 							';
+                      dbms_output.put_line(sql_query);
                 EXECUTE IMMEDIATE sql_query;
             end if;
             
@@ -123,9 +126,9 @@ begin
 									left join admin_hcm.nhanvien_onebss nv3 on nv3.nhanvien_id = c0.thungan_tt_id
 								where lan = ' || ins	|| '
 								)
-						 , km0 as (  
+						 , km0 as (  ';
 										----------------TT Thang tang tren 1 dong-------------
-									select km.rkm_id, km.thuebao_id, km.loaitb_id, km.thang_bddc, km.thang_ktdc, km.thang_kt_mg, km.hieuluc, km.ttdc_id, km.thang_huy, km.thang_kt_dc
+						sql_query3:= 'select km.rkm_id, km.thuebao_id, km.loaitb_id, km.thang_bddc, km.thang_ktdc, km.thang_kt_mg, km.hieuluc, km.ttdc_id, km.thang_huy, km.thang_kt_dc
 													, km.tien_td, km.cuoc_dc, round(km.cuoc_dc/km.thangdc + km.thangkm, 0) avg_thang
 													, km.thangdc + km.thangkm so_thangdc, km.khuyenmai_id
 									from v_thongtinkm_all km 
@@ -143,9 +146,9 @@ begin
 									where (km.tyle_sd + km.tyle_tb < 100) and cuoc_dc > 0 and km.thangdc > 0
 												   -- and least(thang_ktdc, nvl(thang_kt_dc, 999999), nvl(thang_huy, 999999)) >= to_number(to_char(add_months(to_date(decode(thang_bddc, 0, 210001, thang_bddc), ''yyyymm''),0),''yyyymm''))
 												   and least(NGAY_ktdc, nvl(NGAY_THOAI -1, sysdate + INTERVAL ''50'' YEAR), nvl(NGAY_huy -1, sysdate + INTERVAL ''50'' YEAR)) >= ngay_bddc + 90
-							 )';
-				sql_query2:= '	, ds as (select min(ghtt_id) gh_id, donvi_giao, tbh_giao_id, nhanvien_giao, pbh_id_th, tbh_id_th, ma_nv_th, donvi_oa, nhanvien_oa, nvl(duan_id, 0) duan_id, ma_nv, tbh_ql_id, pbh_ql_id
-                            , ma_tb, heso, min(to_char(ngay_kt_mg, ''yyyymmdd'')) thang_ktdc_cu, max(SO_THANGDC) thangdc, sum(cuoc_dc) cuoc_dc, khachhang_id, thuebao_id, loaitb_id, goi_id, thang_kt
+							 )
+				, ds as (select min(ghtt_id) gh_id, donvi_giao, tbh_giao_id, nhanvien_giao, pbh_id_th, tbh_id_th, ma_nv_th, donvi_oa, nhanvien_oa, nvl(duan_id, 0) duan_id, ma_nv, tbh_ql_id, pbh_ql_id
+                        , ma_tb, heso, min(to_char(ngay_kt_mg, ''yyyymmdd'')) thang_ktdc_cu, max(SO_THANGDC) thangdc, sum(cuoc_dc) cuoc_dc, khachhang_id, thuebao_id, loaitb_id, goi_id, thang_kt
 							from ttkdhcm_ktnv.ghtt_giao_688
 							where tratruoc = 1 and km = 1 and loaibo = 0 
 							group by donvi_giao, tbh_giao_id, nhanvien_giao, pbh_id_th, tbh_id_th, ma_tb, ma_nv_th, donvi_oa, nhanvien_oa, heso, khachhang_id, thuebao_id, loaitb_id, goi_id, duan_id, ma_nv, tbh_ql_id, pbh_ql_id, thang_kt
@@ -155,13 +158,13 @@ begin
 										, t0.kenhthu_id, t0.ht_tra_id, t0.manv_cn, t0.phong_cn, t0.manv_thuyetphuc, t0.manv_gt, t0.manv_thungan, km0.so_thangdc, km0.avg_thang
 								from t0
 											join km0 on t0.rkm_id = km0.rkm_id
-						)
-						, goi as (select thuebao_id, nhomtb_id , row_number() over (partition by thuebao_id order by nhomtb_id desc) rn
+						)';
+				sql_query2:= ', goi as (select thuebao_id, nhomtb_id , row_number() over (partition by thuebao_id order by nhomtb_id desc) rn
 						from css_hcm.bd_goi_dadv where trangthai = 1 and dichvuvt_id = 4 
 									   and goi_id not between 1715 and 1726 and goi_id not in (15414, 16221) and goi_id < 100000
 							)
                         
-			select 202409 thang_kt, a.gh_id, a.pbh_ql_id, a.donvi_giao pbh_giao_id, a.tbh_giao_id
+			select  202409 thang_kt, a.gh_id, a.pbh_ql_id, a.donvi_giao pbh_giao_id, a.tbh_giao_id
 						, a.pbh_id_th, c.dvgiaophieu_id pbh_cn_id
 						, a.ma_tb, a.ma_nv manv_cs, pb.ten_pb phong_cs
 						 , (select ma_to_hrm from ttkd_bct.tobanhang where tbh_id = a.tbh_giao_id and a.donvi_giao = pbh_id and hieuluc = 1) ma_to
@@ -206,10 +209,10 @@ begin
 										left join goi on a.thuebao_id = goi.thuebao_id and rn = 1
 								
 			where  a.thang_kt = ' ||thang_bsc ||'  ';
-            dbms_output.put_line(sql_query);
-            EXECUTE IMMEDIATE sql_query || sql_query2;
-            dbms_output.put_line('sucess');
+--            EXECUTE IMMEDIATE sql_query  ||' '|| sql_query3||''|| sql_query2;
 			commit;
+              dbms_output.put_line('my_var');
+            dbms_output.put_line(sql_query  ||' '|| sql_query3||''|| sql_query2);
 --            insert into ct_bsc_tratruoc_moi_30day
 --		(THANG, GH_ID, PBH_QL_ID, PBH_GIAO_ID, TBH_GIAO_ID, PBH_TH_ID, PBH_CN_ID, MA_TB, MANV_CS, PHONG_CS, MA_TO, MA_PB, MANV_GIAO, PHONG_GIAO
 --        , MANV_TH, PHONG_TH, MANV_CN, PHONG_CN, MANV_THPHUC, MAPB_THPHUC, MANV_GT, MANV_THUNGAN, KHDN, HESO_GIAO, THANG_KTDC_CU, TIEN_DC_CU
@@ -219,6 +222,7 @@ begin
 --		select* from tmp_ct_bsc;
 		commit;
 --		EXECUTE IMMEDIATE 'drop table tmp_ct_bsc';
+        delete from ct_bsc_tratruoc_moi_30day where thang = 202409 and rkm_id is null and thuebao_id in (select thuebao_id from tmp3_30ngay where lan = ins);
 		commit;
         update ct_bsc_tratruoc_moi_30day a set tien_khop = 1
         -- select* from ttkd_bsc.ct_bsc_tratruoc_moi_30day a
@@ -281,16 +285,17 @@ begin
                         order by 2
                         ) a  
                 ;
+                
         commit;
---    return 1;
 end bsc_hcm_tb_giaha_022_test;
 
 
 begin 
-    bsc_hcm_tb_giaha_022_test(20240901,20240902,4);
+    bsc_hcm_tb_giaha_022_test(20240901,20240902,5);
 end;
-
-select* from ct_Bsc_Tratruoc_moi_30day where thang = 202409;
+select* from tmp3_30ngay where lan = 4;
+select* from ct_bsc_tratruoc_moi_30day where thang = 202409
+select* from ttkd_Bsc.nhanvien where thang = 202409 and ten_nv like '%Tuy?t%';
 select* from tl_giahan_Tratruoc where thang = 202409;
 -----1-------------Danh sach tham gia han tra truoc--------------PL1(BH, Dai)
 
@@ -301,8 +306,8 @@ select* from ttkdhcm_ktnv.ds_chungtu_nganhang_oneb;
 select distinct ht_Tra_id from tmp3_60ngay;
 --insert into ghtt_null_ngay_bddc
 --insert into tmp3_60ngay
-create table tmp3_60ngay as;
-insert into tmp3_60ngay
+create table tmp3_30ngay as
+--insert into tmp3_30ngay
 with hddc as (select distinct hdtb_id, nvl(h.rkm_id, g.rkm_id) rkm_id, nvl(h.ngay_bddc, g.ngay_bddc) ngay_bddc, nvl(h.ngay_ktdc, g.ngay_ktdc) ngay_ktdc 
     from css_hcm.hdtb_datcoc g left join css_hcm.db_datcoc h on g.thuebao_dc_id = h.thuebao_dc_id)
 , gh as (select khachhang_id, thuebao_id, duan_id, ma_tb, ma_tt, loaitb_id, thang_kt , row_number() over (partition by thuebao_id order by thuebao_id desc) rnk
