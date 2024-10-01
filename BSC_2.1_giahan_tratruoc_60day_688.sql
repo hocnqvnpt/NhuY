@@ -46,7 +46,7 @@ begin
                                                 left join css_hcm.kenhthu kt on kt.kenhthu_id = a.kenhthu_id
                                                 left join css_hcm.nganhang nh on nh.nganhang_id = a.nganhang_id
                                                 left join css_hcm.hinhthuc_tra ht on ht.ht_tra_id = a.ht_tra_id
-                             where a.kenhthu_id not in (6) and a.trangthai = 1
+                             where a.kenhthu_id not in (6) and a.trangthai = 1 -- hop dong da thanh toan
                                             and to_number(to_char(a.ngay_tt, 'yyyymmdd')) between ngay_bd_Tt and ngay_kt_tt                 ----change--3 thang- ngay 2
 																	 
 										)
