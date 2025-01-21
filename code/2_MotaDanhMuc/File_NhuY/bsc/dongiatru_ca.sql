@@ -1,0 +1,112 @@
+select* from ct_dongia_tratruoc where thang = 202401 and ma_kpi = 'DONGIA_CA' ;
+
+insert into ct_dongia_tratruoc (THANG, LOAI_TINH, MA_KPI, MA_NV, tien_dc_cu,MA_TO, MA_PB,DONGIA, PHONG_QL, THUEBAO_ID, MA_TB, DTHU, NGAY_TT, 
+khachhang_id, tien_khop)
+select THANG, 'DONGIATRU' LOAI_TINH,  'DONGIA_CA' ma_kpi, a.manv_giao,  tien_dc_cu, a.MA_TO, a.MA_PB, dongia
+                                                , phong_cs, a.thuebao_id, a.ma_tb, DTHU, ngay_tt, khachhang_id, tien_khop
+from (select thang, a.pbh_giao_id, a.phong_giao, a.manv_giao, a.tien_dc_cu,a.phong_cs, a.ma_to, a.ma_pb,
+     a.thuebao_id, a.ma_tb  , (select sum(da_giahan_dung_hen)*100/sum(tong) 
+                                from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV' and ma_nv = a.manv_giao)
+                ,case 
+                    when decode(sum(a.tien_khop), 0, 0, null, 0, 1) = 0 and (select sum(da_giahan_dung_hen)*100/sum(tong) 
+                                            from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV' and ma_nv = a.manv_giao) >= 85 
+                        then 0 
+                     when decode(sum(a.tien_khop), 0, 0, null, 0, 1) = 0 and  (select sum(da_giahan_dung_hen)*100/sum(tong) 
+                                            from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV'  and ma_nv = a.manv_giao) <= 50 
+                        then round((11*tien_dc_Cu)/100,0) 
+                    when decode(sum(a.tien_khop), 0, 0, null, 0, 1) = 0 and  (select sum(da_giahan_dung_hen)*100/sum(tong) 
+                                            from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV'  and ma_nv = a.manv_giao) >50 
+                                      and (select sum(da_giahan_dung_hen)*100/sum(tong) 
+                                            from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV'  and ma_nv = a.manv_giao) <85
+                        then round(11*0.5*tien_dc_cu)/100
+                        else 0 
+                end dongia
+                   , khachhang_id , sum(tien_thanhtoan) DTHU, max(ngay_tt) ngay_tt, decode(sum(a.tien_khop), 0, 0, null, 0, 1) tien_khop
+              from ttkd_bsc.ct_bsc_giahan_cntt a
+                    where a.thang = 202401  and thang_ktdc_cu = 202401  and losaitb_id not in (147,148)           ------------n------------
+                    group by thang, a.pbh_giao_id, a.phong_giao, a.manv_giao, a.ma_to, a.ma_pb, phong_cs,a.tien_dc_cu,
+                    a.thuebao_id, a.ma_tb, khachhang_id
+             ) a
+                    join ttkd_bsc.nhanvien_202401 nv on a.manv_giao = nv.ma_nv
+rollback;
+COMMIT;
+-- INSERT VAO BANG TILE
+insert into tl_giahan_tratruoc (THANG, LOAI_TINH, MA_KPI, MA_NV, MA_TO, MA_PB, TONG, DA_GIAHAN_DUNG_HEN, DTHU_DUYTRI
+                                                                                                        , DTHU_THANHCONG_DUNG_HEN, TYLE, TIEN)       
+--insert into tl_giahan_tratruoc (THANG, LOAI_TINH, MA_KPI, MA_NV, MA_TO, MA_PB, TONG, DA_GIAHAN_DUNG_HEN, DTHU_DUYTRI, DTHU_THANHCONG_DUNG_HEN, TYLE, TIEN)                                                                                                             
+select thang, loai_tinh, ma_kpi, ma_nv, ma_to, ma_pb
+                , count(thuebao_id) tong
+                  , sum(case when dthu > 0 and tien_khop > 0 then 1 else 0 end) da_giahan
+                  , round(sum(tien_dc_cu/1.1), 0) DTHU_DUYTRI
+                  , sum(dthu) DTHU_thanhcong
+                  , round(sum(case when dthu > 0 and tien_khop = 1 then 1 else 0 end) *100/count(thuebao_id), 2)  tyle
+                  , round(-1*sum(dongia), 0) dongia
+-- select * 
+--from ttkd_bsc.ct_dongia_tratruoc  a
+from ct_dongia_tratruoc  a
+where ma_kpi = 'DONGIA_CA' 
+        and loai_tinh = 'DONGIATRU' and thang = 202401
+group by thang, loai_tinh, ma_kpi, ma_nv, ma_to, ma_pb
+
+select* from tl_giahan_Tratruoc where ma_kpi = 'DONGIA_CA' 
+
+select* from ct_Dongia_tratruoc where ma_kpi = 'DONGIA_CA' 
+select DISTINCT b.ten_vtcv from tl_giahan_tratruoc a
+    join ttkd_bsc.nhanvien_202401 b on a.ma_nv = b.ma_nv
+    where ma_kpi = 'DONGIA_CA'; --AND A.MA_NV = 'VNP017576'
+    
+----------------------------------------------------------------------------------------------------------------
+DROP TABLE DONGIATRU
+
+CREATE TABLE DONGIATRU AS select* from (
+select THANG, a.manv_giao, a.MA_TO, a.MA_PB, tien_dc_cu dthu_goi, KQTH, cast(11  as number) tyle_dgia_tru
+      ,  Case when tien_khop = 1 then 0
+            when kqth >= 85 then 0 
+            when kqth <50 then 100
+            else  50 end tyle_tru
+        , case when 
+            tien_khop = 1 then 0 
+            when kqth >= 85 then 0 when kqth <= 50 and tien_khop = 0 then round(11*tien_dc_cu/100)
+            when tien_khop = 0 and kqth > 50 and kqth < 85 then
+        round(11*0.5*tien_dc_cu/100) 
+        end dongia_tru, l.loaihinh_Tb
+      , a.ma_tb, DTHU dthu_giahan, ngay_tt, tien_khop
+from ( select thang, a.pbh_giao_id, a.phong_giao, a.manv_giao, a.tien_dc_cu,a.phong_cs, a.ma_to, a.ma_pb,a.loaitb_id,
+     a.thuebao_id, a.ma_tb  , round((select sum(da_giahan_dung_hen)*100/sum(tong) 
+                                from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV' and ma_nv = a.manv_giao),2) KQTH, 
+--                case 
+--                    when decode(sum(a.tien_khop), 0, 0, null, 0, 1) = 0 and (select sum(da_giahan_dung_hen)*100/sum(tong) 
+--                                            from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV' and ma_nv = a.manv_giao) >= 85 
+--                        then 0 
+--                     when decode(sum(a.tien_khop), 0, 0, null, 0, 1) = 0 and  (select sum(da_giahan_dung_hen)*100/sum(tong) 
+--                                            from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV'  and ma_nv = a.manv_giao) <= 50 
+--                        then round((11*tien_dc_Cu)/100,0) 
+--                    when decode(sum(a.tien_khop), 0, 0, null, 0, 1) = 0 and  (select sum(da_giahan_dung_hen)*100/sum(tong) 
+--                                            from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV'  and ma_nv = a.manv_giao) >50 
+--                                      and (select sum(da_giahan_dung_hen)*100/sum(tong) 
+--                                            from ttkd_Bsc.tl_giahan_tratruoc where thang = 202401 and ma_kpi = 'HCM_TB_GIAHA_024' and loai_tinh = 'KPI_NV'  and ma_nv = a.manv_giao) <85
+--                        then round(11*0.5*tien_dc_cu)/100
+--                        else 0 
+--                end dongia
+                    khachhang_id , sum(tien_thanhtoan) DTHU, max(ngay_tt) ngay_tt, decode(sum(a.tien_khop), 0, 0, null, 0, 1) tien_khop
+              from ttkd_bsc.ct_bsc_giahan_cntt a
+                    where a.thang = 202401  and thang_ktdc_cu = 202401  and a.loaitb_id not in (147,148)           ------------n------------
+                    group by thang, a.pbh_giao_id, a.phong_giao, a.manv_giao, a.ma_to, a.ma_pb, phong_cs,a.tien_dc_cu,
+                    a.thuebao_id, a.ma_tb, khachhang_id, a.loaitb_id
+             ) a
+                    join ttkd_bsc.nhanvien_202401 nv on a.manv_giao = nv.ma_nv
+                    left join css_hcm.loaihinh_tb l on a.loaitb_id = l.loaitb_id
+                    
+) 
+
+select THANG, MA_NV, MA_TO, MA_PB, TONG, DA_GIAHAN_DUNG_HEN, DTHU_DUYTRI, DTHU_THANHCONG_DUNG_HEN, TYLE, TIEN 
+from tl_giahan_Tratruoc where loai_tinh = 'DONGIATRU' AND MA_KPI = 'DONGIA_CA';
+
+select * from ttkd_bct.db_thuebao_ttkd where NHOM_NOCUOC = 4 and pbh_ql_id = 3   ;
+
+SELECT * FROM DONGIATRU-- WHERE MANV_GIAO = 'VNP017576';
+select* from css_hcm.khoanmuc_tt where khoanmuctt_id in (
+select distinct khoanmuctt_id from css_hcm.ct_tienhd where tien< 0);
+select* from css_hcm.khoanmuc_tt where khoanmuctt_id = 36
+select SUM( TIEN )
+from tl_giahan_Tratruoc where loai_tinh = 'DONGIATRU' AND MA_KPI = 'DONGIA_CA';    

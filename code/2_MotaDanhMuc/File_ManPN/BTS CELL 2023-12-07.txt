@@ -1,0 +1,247 @@
+SELECT THANG_HH, SUM(NVL(HOAHONG,0)),SUM(NVL(HH_GHI_NHAN_TRONG_THANG,0))
+FROM Nganbh.CHIPHI_HH_PBO_FREDOO
+GROUP BY  THANG_HH
+ORDER BY THANG_HH;
+
+SELECT THANG_HH, SUM(NVL(HOA_HONG,0))+SUM(NVL(HOA_HONG_KK ,0))+SUM(NVL(HOA_HONG_BS,0)) HH_PHAT_SINH,
+SUM(NVL(HH_PBO,0))+SUM(NVL(HOA_HONG_KK ,0))+SUM(NVL(HOA_HONG_BS,0)) HH_PHAN_BO_TRONG_THANG
+FROM Nganbh.CHIPHI_HH_PBO_TDL
+GROUP BY  THANG_HH
+ORDER BY THANG_HH;
+
+
+SELECT THANG, SUM(TO_NUMBER(NVL(HH_GTDH,0))) HH_GTDH,SUM(TO_NUMBER(NVL(HH_HTDH,0))) HH_HTDH,
+SUM(CASE WHEN UPPER(MA_NGUOI_NHAN_HH_PT_CTV) LIKE 'P%' THEN TO_NUMBER(NVL(HH_PT_CTV,0)) ELSE 0 END) HH_PT_CTV,
+SUM(TO_NUMBER(NVL(HH_GHI_NHAN_TRONG_THANG,0))) HH_GHI_NHAN_TRONG_THANG
+FROM CHIPHI_HH_PBO_DIGISHOP
+GROUP BY THANG
+ORDER BY THANG;
+
+SELECT THANG, SUM(TO_NUMBER(NVL(HH_GTDH,0))) HH_GTDH,SUM(TO_NUMBER(NVL(HH_HTDH,0))) HH_HTDH,
+SUM(TO_NUMBER(NVL(HH_PT_CTV,0)) ) HH_PT_CTV,
+SUM(TO_NUMBER(NVL(HH_GHI_NHAN_TRONG_THANG,0))) HH_GHI_NHAN_TRONG_THANG
+FROM nganbh.CHIPHI_HH_PBO_DIGISHOP
+GROUP BY THANG
+ORDER BY THANG;
+
+select SUM(TO_NUMBER(NVL(HH_GTDH,0))),SUM(TO_NUMBER(NVL(HH_HTDH,0))) HH_HTDH,SUM(TO_NUMBER(NVL(HH_PT_CTV,0)) ) HH_PT_CTV
+FROM nganbh.CHIPHI_HH_PBO_DIGISHOP;
+
+select * from nganbh.CHIPHI_HH_PBO_DIGISHOP;
+
+select DISTINCT substr(BTS_NAME,4,6) MA_BTS, BTS_NAME, DISTRICT_NAME, PRECINCT_NAME, ADDRESS from nganbh.DS_BTS_052023
+where substr(BTS_NAME,4,6) not in (select ma_bts from ttkdhcm_ktnv.db_bts@dhsxkd)
+    and ADDRESS is not null;
+
+select * from bts_check_duplicated
+where thang = 202312;
+delete from bts_check_duplicated
+where thang = 202312;
+update bts_check_duplicated
+set thang = 202312
+where thang is null;
+
+select * from ttkdhcm_ktnv.db_bts@dhsxkd;
+SELECT * FROM manpn.bts_check_duplicated@DHSXKD;
+
+update bts_check_duplicated
+set thang = 202310
+where thang is null;
+select * from manpn.bts_check_duplicated@TTKDDB 
+rollback;
+delete from bts_check_duplicated;
+commit;
+
+SELECT A.*, SUBSTR(A.BTS_NAME,4,6) AS BTS_STR, B.MA_BTS 
+FROM BTS_CHECK_DUPLICATED A 
+    LEFT JOIN TTKDHCM_KTNV.DB_BTS@DHSXKD B ON UPPER(B.MA_BTS) = UPPER(SUBSTR(A.BTS_NAME,4,6))
+WHERE B.MA_BTS IS NULL 
+        AND THANG = 202310
+order by bts_str;
+
+select * from MANPN.BTS_UTF8 ;
+update MANPN.BTS_UTF8 
+set thang = 202312
+where thang is null;
+
+update MANPN.BTS_CELL701
+set thang = 202312
+where thang is null;
+commit;
+
+
+
+with cte as(
+SELECT a.* ,SUBSTR(BTS_NAME, 4, 6) AS BTS_NAME_2--, STAFF_CODE
+FROM MANPN.BTS_CELL701 a
+WHERE THANG = 202312   ------------------------------------------
+--WHERE STAFF_CODE IS NOT NULL
+),
+cte2 as(
+select ma_bts, ma_nv, count(ma_bts) as coun from ttkdhcm_ktnv.db_bts_nv_theoky 
+where kygiao = '202311'  -------------------------------------------------- LÙI 2 THÁNG
+group by ma_bts, ma_nv
+--having count(ma_bts) =2
+),
+cte3 as(
+select * from cte2 
+where coun = 2
+),
+cte4 as(
+select * 
+from(
+    select a.*, row_number() over(partition by ma_bts order by bts_nv_id desc) ra
+    from ttkdhcm_ktnv.db_bts_nv_theoky a
+    where kygiao =202311  ---------------------------------------------------------LÙI 1 THÁNG
+    )
+where ra = 1 
+),
+ctes as(
+select ma_bts,nv, min(ra)
+from(
+    select a.*, row_number() over(partition by ma_bts order by bts_nv_id desc) ra, b.ma_nv as NV
+    from ttkdhcm_ktnv.db_bts_nv_theoky a left join ttkd_bsc.nhanvien_202311 b ON a.MA_NV = b.MA_NV------------------------------
+    where kygiao = 202311 --and ma_bts = 'BTH152'  -------------------------------------LÙI 1 THÁNG
+    )
+where ra > 1 and nv is not null
+group by ma_bts, nv
+),
+cte_combine as(
+select bts_nv_id, kygiao, a.ma_bts, 
+    case when c.ma_nv is null and b.nv is not null then b.nv else a.ma_nv end ma_nv, loai_nhanvien, ngay_cn
+from cte4 a left join ctes b on a.ma_bts = b.ma_bts
+    left join ttkd_bsc.nhanvien_202311 c on a.ma_nv = c.ma_nv-----------------------------------THÁNG TIẾP THEO
+),
+cte5 as(
+SELECT a.cell_id,
+    a.province_name,
+    a.district_name,
+    a.precinct_name,
+    a.address,
+    a.lac,
+    a.ci,
+    a.cell_name,
+    a.bts_name,
+    a.staff_code,
+    a.bts_name_2,
+    b.ma_bts,
+    b.ma_nv,
+    C.MAIL_VNPT, 
+    SUBSTR(C.MAIL_VNPT, 1, INSTR(C.MAIL_VNPT, '@') - 1) AS MAIL
+FROM cte A LEFT JOIN cte_combine B ON lower(a.BTS_NAME_2) = lower(B.MA_BTS)
+    left join ttkd_bsc.nhanvien_202311 C ON B.MA_NV = C.MA_NV -----------------------------------------------------
+),
+cte6 as(
+select * from cte5
+where staff_code = mail
+),
+cte7 as(
+select * from cte5
+minus 
+select * from cte6
+)
+select a.cell_id,
+    a.province_name,
+    a.district_name,
+    a.precinct_name,
+    a.address,
+    a.lac,
+    a.ci,
+    a.cell_name,
+    a.bts_name,
+    a.staff_mail as staff_code
+from (
+    select cte7.*, 
+        case when staff_code is null or staff_code != mail then mail 
+             when staff_code is not null and mail is not null and staff_code != mail then mail 
+        end staff_mail
+    from cte7
+    ) a
+where a.staff_mail is not null;
+
+
+
+with cte as(
+SELECT a.* ,SUBSTR(BTS_NAME, 4, 6) AS BTS_NAME_2--, STAFF_CODE
+FROM BTS_UTF8 a
+WHERE THANG = 202312 ------------------------------------------------------------
+),
+cte2 as(
+select ma_bts, ma_nv, count(ma_bts) as coun from ttkdhcm_ktnv.db_bts_nv_theoky 
+where kygiao = '202311' -------------------------------------
+group by ma_bts, ma_nv
+--having count(ma_bts) =2
+),
+cte3 as(
+select * from cte2 
+where coun = 2
+),
+cte4 as(
+select * 
+from(
+    select a.*, row_number() over(partition by ma_bts order by bts_nv_id desc) ra
+    from ttkdhcm_ktnv.db_bts_nv_theoky a
+    where kygiao = 202311----------------------------------------------
+    )
+where ra = 1 
+),
+ctes as(
+select ma_bts,nv, min(ra)
+from(
+    select a.*, row_number() over(partition by ma_bts order by bts_nv_id desc) ra, b.ma_nv as NV
+    from ttkdhcm_ktnv.db_bts_nv_theoky a left join ttkd_bsc.nhanvien_202311 b ON a.MA_NV = b.MA_NV------------------------------
+    where kygiao = 202311 --and ma_bts = 'BTH152' ---------------------------------------------------------
+    )
+where ra > 1 and nv is not null
+group by ma_bts, nv
+),
+cte_combine as(
+select bts_nv_id, kygiao, a.ma_bts, 
+    case when c.ma_nv is null and b.nv is not null then b.nv else a.ma_nv end ma_nv, loai_nhanvien, ngay_cn
+from cte4 a left join ctes b on a.ma_bts = b.ma_bts
+    left join ttkd_bsc.nhanvien_202311 c on a.ma_nv = c.ma_nv ---------------------------------------------
+),
+cte5 as(
+SELECT a.bts_id,
+    a.PROVINCE_NAME,
+    a.DISTRICT_NAME,
+    a.PRECINCT_NAME,
+    a.ADDRESS,
+    a.LAC,
+    a.bts_name,
+    a.NE_TYPE,
+    a.staff_code,
+    a.bts_name_2,
+    b.ma_bts,
+    b.ma_nv,
+    C.MAIL_VNPT, 
+    SUBSTR(C.MAIL_VNPT, 1, INSTR(C.MAIL_VNPT, '@') - 1) AS MAIL
+FROM cte A LEFT JOIN cte_combine B ON lower(a.BTS_NAME_2) = lower(B.MA_BTS)
+    left join ttkd_bsc.nhanvien_202311 C ON B.MA_NV = C.MA_NV --------------------------------------------------
+),
+cte6 as(
+select * from cte5
+where staff_code = mail
+),
+cte7 as(
+select * from cte5
+minus 
+select * from cte6
+)
+select a.bts_id,
+    a.PROVINCE_NAME,
+    a.DISTRICT_NAME,
+    a.PRECINCT_NAME,
+    a.ADDRESS,
+    a.LAC,
+    a.bts_name,
+    a.NE_TYPE,
+    a.staff_mail as staff_code
+from (
+    select cte7.*, 
+        case when staff_code is null or staff_code != mail then mail 
+             when staff_code is not null and mail is not null and staff_code != mail then mail 
+        end staff_mail
+    from cte7
+    ) a
+where staff_mail is not null ;

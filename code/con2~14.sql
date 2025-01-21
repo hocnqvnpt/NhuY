@@ -1,0 +1,1 @@
+select* from ds_giahan_Tratruoc;

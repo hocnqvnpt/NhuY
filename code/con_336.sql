@@ -1,0 +1,1 @@
+select* from ttkd_Bsc.nhanvien where thang = 202408 and ma_nv in ('VNP017327','VNP017685','VNP016653')

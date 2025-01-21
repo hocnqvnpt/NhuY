@@ -1,0 +1,1 @@
+select* from v_Thongtinkm_all where ma_Tb = 'huong2022htv';
