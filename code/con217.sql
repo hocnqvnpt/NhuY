@@ -1,1 +1,0 @@
-select* from admin_hcm.nhanvien_onebss where ma_nv in ('CTV062741')

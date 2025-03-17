@@ -1,1 +1,0 @@
-SELECT * FROM all_indexes WHERE table_name = 'CT_TIENHD'

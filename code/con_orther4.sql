@@ -1,1 +1,0 @@
-select* from css_hcm.goi_dadv_lhtb

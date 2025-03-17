@@ -1,1 +1,0 @@
-select distinct * from ttkd_bsc.blkpi_dm_to_pgd where thang=202411 and ma_to is null;

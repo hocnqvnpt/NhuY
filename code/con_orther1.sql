@@ -1,1 +1,0 @@
-select * from css_Hcm.hinhthuc_tra where ht_Tra_id in (select distinct ht_Tra_id from tmp3_60ngay )

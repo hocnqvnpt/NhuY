@@ -1,1 +1,0 @@
-select* from ct_Bsc_trasau_tp_tratruoc_final

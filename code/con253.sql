@@ -1,1 +1,0 @@
-select distinct ten_to from ttkd_bsc.nhanvien_202406;
